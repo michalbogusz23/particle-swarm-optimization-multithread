@@ -27,7 +27,7 @@ public class Swarm {
     public Swarm(double minRange, double maxRange, int numOfParticles,
                  int numOfEpochs, double inertia, double localBestAim,
                  double globalBestAim, int numOfThreads) {
-        new Swarm(minRange, maxRange, numOfParticles, numOfEpochs,
+        this(minRange, maxRange, numOfParticles, numOfEpochs,
                 inertia, localBestAim, globalBestAim);
         this.numOfThreads = numOfThreads;
 
@@ -56,10 +56,19 @@ public class Swarm {
         Particle[] particles = initialize();
 
         for (int i = 0; i < numOfEpochs; i++) {
-            List<Vector> multithreadRanges = divideForRanges(particles);
-            for (Vector particlesRange : multithreadRanges) {
-                MultithreadPSO o = new MultithreadPSO(particles, particlesRange, this);
-                o.start();
+            List<Vector> multithreadedRanges = divideForRanges(particles);
+            MultithreadPSO[] threads = new MultithreadPSO[numOfThreads];
+            int j = 0;
+            for (Vector particlesRange : multithreadedRanges) {
+                threads[j] = new MultithreadPSO(particles, particlesRange, this);
+                threads[j++].start();
+            }
+            for (MultithreadPSO t : threads) {
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
         System.out.printf("PSO finished working\n");
