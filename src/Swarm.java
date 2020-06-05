@@ -1,14 +1,18 @@
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 public class Swarm {
-    private int numOfParticles;
+    private int numOfParticles, numOfEpochs, numOfThreads;
     private double minRange, maxRange;
     private double bestSwarmPositionEval;
     private Vector bestSwarmPosition;
-    private int numOfEpochs;
     private double inertia, localBestAim, globalBestAim;
 
-    public Swarm(double minRange, double maxRange, int numOfParticles, int numOfEpochs, double inertia, double localBestAim, double globalBestAim) {
+    public Swarm(double minRange, double maxRange, int numOfParticles,
+                 int numOfEpochs, double inertia, double localBestAim,
+                 double globalBestAim, int numOfThreads) {
         this.minRange = minRange;
         this.maxRange = maxRange;
         this.numOfParticles = numOfParticles;
@@ -16,6 +20,7 @@ public class Swarm {
         this.inertia = inertia;
         this.localBestAim = localBestAim;
         this.globalBestAim = globalBestAim;
+        this.numOfThreads = numOfThreads;
         bestSwarmPosition = new Vector();
         bestSwarmPositionEval = Double.POSITIVE_INFINITY;
     }
@@ -37,6 +42,24 @@ public class Swarm {
         System.out.printf("PSO finished working\n");
         System.out.printf("Found minimum: %f\n", bestSwarmPositionEval);
         System.out.printf("For x= %f, y= %f\n", bestSwarmPosition.getX(), bestSwarmPosition.getY());
+    }
+
+    public void startMultithreadedAlgorithm() {
+        Particle[] particles = initialize();
+        for (int i = 0; i < numOfEpochs; i++) {
+            divideForRanges(particles);
+        }
+    }
+
+    private void divideForRanges(Particle[] particles) {
+        int size = particles.length;
+        List<Particle[]> threadParticlesList = new LinkedList<>();
+        int threadSize = (int) size / numOfThreads;
+        int i;
+        for (i = 0; i < numOfThreads - 1; i++) {
+            threadParticlesList.add(Arrays.copyOfRange(particles, i * threadSize, (i + 1) * threadSize));
+        }
+        threadParticlesList.add(Arrays.copyOfRange(particles, i * threadSize, size));
     }
 
     private void updateBestSwarmPosition(Particle p) {
