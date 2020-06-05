@@ -1,4 +1,3 @@
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -57,23 +56,23 @@ public class Swarm {
         Particle[] particles = initialize();
 
         for (int i = 0; i < numOfEpochs; i++) {
-            List<Particle[]> multithreadRanges = divideForRanges(particles);
-            for (Particle[] particlesRange : multithreadRanges) {
-                MultithreadPSO o = new MultithreadPSO(particlesRange, this);
+            List<Vector> multithreadRanges = divideForRanges(particles);
+            for (Vector particlesRange : multithreadRanges) {
+                MultithreadPSO o = new MultithreadPSO(particles, particlesRange, this);
                 o.start();
             }
         }
     }
 
-    private List<Particle[]> divideForRanges(Particle[] particles) {
+    private List<Vector> divideForRanges(Particle[] particles) {
         int size = particles.length;
-        List<Particle[]> threadParticlesList = new LinkedList<>();
+        List<Vector> threadParticlesList = new LinkedList<>();
         int threadSize = (int) size / numOfThreads;
         int i;
         for (i = 0; i < numOfThreads - 1; i++) {
-            threadParticlesList.add(Arrays.copyOfRange(particles, i * threadSize, (i + 1) * threadSize));
+            threadParticlesList.add(new Vector(i * threadSize, (i + 1) * threadSize));
         }
-        threadParticlesList.add(Arrays.copyOfRange(particles, i * threadSize, size));
+        threadParticlesList.add(new Vector(i * threadSize, size));
 
         return threadParticlesList;
     }
