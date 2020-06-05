@@ -5,7 +5,7 @@ public class PSO {
     public static void main(String[] argv) {
         final double minRange = -5.12;
         final double maxRange = 5.12;
-        final int numOfParticles = 1000;
+        final int numOfParticles = 10000;
         final int numOfEpochs = 20;
         final double inertia = 0.9;
         final double localBestAim = 2.5;
@@ -24,7 +24,7 @@ public class PSO {
                 inertia, localBestAim, globalBestAim, numOfThreads);
         System.out.printf("Starting parallel algorithm with %d threads\n", numOfThreads);
         start = Instant.now();
-        PSO.startAlgorithm();
+        multithreadedPSO.startMultithreadedAlgorithm();
         finish = Instant.now();
         long parallelTimeElapsed = Duration.between(start, finish).toMillis();
         System.out.printf("Time of execution  %dms\n\n", parallelTimeElapsed);

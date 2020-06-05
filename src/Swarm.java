@@ -1,4 +1,3 @@
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -28,7 +27,7 @@ public class Swarm {
     public Swarm(double minRange, double maxRange, int numOfParticles,
                  int numOfEpochs, double inertia, double localBestAim,
                  double globalBestAim, int numOfThreads) {
-        new Swarm(minRange, maxRange, numOfParticles, numOfEpochs,
+        this(minRange, maxRange, numOfParticles, numOfEpochs,
                 inertia, localBestAim, globalBestAim);
         this.numOfThreads = numOfThreads;
 
@@ -57,23 +56,35 @@ public class Swarm {
         Particle[] particles = initialize();
 
         for (int i = 0; i < numOfEpochs; i++) {
-            List<Particle[]> multithreadRanges = divideForRanges(particles);
-            for (Particle[] particlesRange : multithreadRanges) {
-                MultithreadPSO o = new MultithreadPSO(particlesRange, this);
-                o.start();
+            List<Vector> multithreadedRanges = divideForRanges(particles);
+            MultithreadPSO[] threads = new MultithreadPSO[numOfThreads];
+            int j = 0;
+            for (Vector particlesRange : multithreadedRanges) {
+                threads[j] = new MultithreadPSO(particles, particlesRange, this);
+                threads[j++].start();
+            }
+            for (MultithreadPSO t : threads) {
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
+        System.out.printf("PSO finished working\n");
+        System.out.printf("Found minimum: %f\n", bestSwarmPositionEval);
+        System.out.printf("For x= %f, y= %f\n", bestSwarmPosition.getX(), bestSwarmPosition.getY());
     }
 
-    private List<Particle[]> divideForRanges(Particle[] particles) {
+    private List<Vector> divideForRanges(Particle[] particles) {
         int size = particles.length;
-        List<Particle[]> threadParticlesList = new LinkedList<>();
+        List<Vector> threadParticlesList = new LinkedList<>();
         int threadSize = (int) size / numOfThreads;
         int i;
         for (i = 0; i < numOfThreads - 1; i++) {
-            threadParticlesList.add(Arrays.copyOfRange(particles, i * threadSize, (i + 1) * threadSize));
+            threadParticlesList.add(new Vector(i * threadSize, (i + 1) * threadSize));
         }
-        threadParticlesList.add(Arrays.copyOfRange(particles, i * threadSize, size));
+        threadParticlesList.add(new Vector(i * threadSize, size));
 
         return threadParticlesList;
     }
