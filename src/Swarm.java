@@ -62,6 +62,9 @@ public class Swarm {
                 o.start();
             }
         }
+        System.out.printf("PSO finished working\n");
+        System.out.printf("Found minimum: %f\n", bestSwarmPositionEval);
+        System.out.printf("For x= %f, y= %f\n", bestSwarmPosition.getX(), bestSwarmPosition.getY());
     }
 
     private List<Vector> divideForRanges(Particle[] particles) {
