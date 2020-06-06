@@ -1,14 +1,17 @@
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 public class Swarm {
-    private int numOfParticles;
+    private int numOfParticles, numOfEpochs, numOfThreads;
     private double minRange, maxRange;
     private double bestSwarmPositionEval;
     private Vector bestSwarmPosition;
-    private int numOfEpochs;
     private double inertia, localBestAim, globalBestAim;
 
-    public Swarm(double minRange, double maxRange, int numOfParticles, int numOfEpochs, double inertia, double localBestAim, double globalBestAim) {
+    public Swarm(double minRange, double maxRange, int numOfParticles,
+                 int numOfEpochs, double inertia, double localBestAim,
+                 double globalBestAim) {
         this.minRange = minRange;
         this.maxRange = maxRange;
         this.numOfParticles = numOfParticles;
@@ -16,8 +19,18 @@ public class Swarm {
         this.inertia = inertia;
         this.localBestAim = localBestAim;
         this.globalBestAim = globalBestAim;
+        this.numOfThreads = numOfThreads;
         bestSwarmPosition = new Vector();
         bestSwarmPositionEval = Double.POSITIVE_INFINITY;
+    }
+
+    public Swarm(double minRange, double maxRange, int numOfParticles,
+                 int numOfEpochs, double inertia, double localBestAim,
+                 double globalBestAim, int numOfThreads) {
+        this(minRange, maxRange, numOfParticles, numOfEpochs,
+                inertia, localBestAim, globalBestAim);
+        this.numOfThreads = numOfThreads;
+
     }
 
     public void startAlgorithm(){
@@ -39,7 +52,44 @@ public class Swarm {
         System.out.printf("For x= %f, y= %f\n", bestSwarmPosition.getX(), bestSwarmPosition.getY());
     }
 
-    private void updateBestSwarmPosition(Particle p) {
+    public void startMultithreadedAlgorithm() {
+        Particle[] particles = initialize();
+
+        for (int i = 0; i < numOfEpochs; i++) {
+            List<Vector> multithreadedRanges = divideForRanges(particles);
+            MultithreadPSO[] threads = new MultithreadPSO[numOfThreads];
+            int j = 0;
+            for (Vector particlesRange : multithreadedRanges) {
+                threads[j] = new MultithreadPSO(particles, particlesRange, this);
+                threads[j++].start();
+            }
+            for (MultithreadPSO t : threads) {
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        System.out.printf("PSO finished working\n");
+        System.out.printf("Found minimum: %f\n", bestSwarmPositionEval);
+        System.out.printf("For x= %f, y= %f\n", bestSwarmPosition.getX(), bestSwarmPosition.getY());
+    }
+
+    private List<Vector> divideForRanges(Particle[] particles) {
+        int size = particles.length;
+        List<Vector> threadParticlesList = new LinkedList<>();
+        int threadSize = (int) size / numOfThreads;
+        int i;
+        for (i = 0; i < numOfThreads - 1; i++) {
+            threadParticlesList.add(new Vector(i * threadSize, (i + 1) * threadSize));
+        }
+        threadParticlesList.add(new Vector(i * threadSize, size));
+
+        return threadParticlesList;
+    }
+
+    public void updateBestSwarmPosition(Particle p) {
         bestSwarmPositionEval = p.getBestPositionEval();
         bestSwarmPosition = p.getBestPosition().clone();
     }
@@ -57,7 +107,7 @@ public class Swarm {
         return particles;
     }
 
-    private void updateParticleVelocity(Particle p) {
+    public void updateParticleVelocity(Particle p) {
         Vector oldVelocity = p.getVelocity();
         Vector position = p.getPosition();
         Vector particleBestPosition = p.getBestPosition();
@@ -79,5 +129,9 @@ public class Swarm {
         newVelocity.sum(thirdPart);
 
         p.setVelocity(newVelocity);
+    }
+
+    public double getBestSwarmPositionEval() {
+        return bestSwarmPositionEval;
     }
 }
